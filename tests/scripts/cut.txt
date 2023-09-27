@@ -1,0 +1,6 @@
+./bin/cut cut_data/data.spaces 
+./bin/cut -f 2 cut_data/data.spaces 
+./bin/cut cut_data/data.csv
+./bin/cut -d , cut_data/data.csv
+./bin/cut -d , -f 2 cut_data/data.csv
+quit

@@ -1,0 +1,8 @@
+$ ./bin/env A=5 ./bin/env
+A=5
+$ ./bin/env A=5 B=6 C=7 ./bin/env
+A=5
+B=6
+C=7
+$ quit
+
