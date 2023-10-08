@@ -10,13 +10,13 @@
 //   - running a pair of commands that are connected with a pipe
 
 // Check if the command is in the ./bin/ directory
-int is_bin_command(const char *command);
+int is_bin_command (const char *command);
 
 // Execute a command
-void execute_ls_command(char **tokens);
-void execute_head_command(char **tokens);
-void execute_cut_command(char **tokens);
-void execute_command(char **tokens);
-void execute_env_command(char **tokens);
+void execute_ls_command (char **tokens);
+void execute_head_command (char **tokens);
+void execute_cut_command (char **tokens);
+void execute_command (char **tokens);
+void execute_env_command (char **tokens);
 
 #endif

@@ -220,11 +220,11 @@ find_index (char *str)
   unsigned long probe = PRIME - (keyhash % PRIME);
 
   // Use double hashing to resolve collisions
-  size_t index = (size_t) (keyhash % capacity);
+  size_t index = (size_t)(keyhash % capacity);
   ssize_t first_open = -1;
   for (size_t i = 0; i < capacity; i++)
     {
-      size_t trial = (index + (size_t) (i * probe)) % capacity;
+      size_t trial = (index + (size_t)(i * probe)) % capacity;
       // If the key is NULL, we have not encountered the string. If there
       // was an earlier open spot, use that one. Otherwise, use the spot
       // with the empty key.

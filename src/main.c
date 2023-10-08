@@ -15,17 +15,17 @@ main (int argc, char *argv[])
 {
 
   FILE *script = stdin;
-  
-  if (!get_args(argc, argv, &script))
-  {
-    usage();
-    return EXIT_FAILURE;
-  }
 
-  shell(script);
+  if (!get_args (argc, argv, &script))
+    {
+      usage ();
+      return EXIT_FAILURE;
+    }
+
+  shell (script);
 
   if (script != stdin)
-    fclose(script);
+    fclose (script);
 
   return EXIT_SUCCESS;
 }

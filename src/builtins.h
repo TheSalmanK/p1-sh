@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 int echo (char *);
-int export (char *);
+int export(char *);
 int pwd (void);
 int unset (char *);
 int which (char *);
