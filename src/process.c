@@ -10,8 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
-
 // HELPER FUNCTIONS
 
 // Check if the command is in the ./bin/ directory
@@ -39,6 +40,33 @@ is_positive_integer (const char *str)
 }
 
 // END HELPER FUNCTIONS
+
+// functionality for the cat command
+void
+execute_cat_command (char **tokens)
+{
+  char *args[100];
+  int k = 0; // Index for args array
+
+  // Default command is "cat"
+  args[k++] = "cat";
+
+  // Iterate through the tokens to find the file
+  for (int j = 1; tokens[j] != NULL; j++)
+    {
+      // Assume any argument is a file
+      args[k++] = tokens[j];
+    }
+
+  args[k] = NULL; // Ensure args array is null-terminated
+
+  // Execute the cat command with the arguments
+  if (execvp ("/bin/cat", args) == -1)
+    {
+      perror ("Error executing cat command");
+      exit (EXIT_FAILURE);
+    }
+}
 
 void
 execute_env_command (char **tokens)
@@ -271,7 +299,6 @@ execute_ls_command (char **tokens)
   // Flags for the ls command
   int found_a_flag = 0;
   int found_s_flag = 0;
-
   // Iterate through the tokens to find flags and directory
   for (int j = 1; tokens[j] != NULL; j++)
     {
@@ -291,7 +318,6 @@ execute_ls_command (char **tokens)
           args[k++] = tokens[j];
         }
     }
-
   // If no directory is specified, use the current directory
   if (!found_a_flag && !found_s_flag && tokens[1] == NULL)
     {
@@ -316,49 +342,118 @@ execute_ls_command (char **tokens)
 void
 execute_command (char **tokens)
 {
-  char *command = tokens[0];
-  if (command[0] == '.' && command[1] == '/')
-    {
-      command += 1; // Skip the '.'
-    }
+  char **left_tokens = NULL;  // Commands to the left of the pipe
+  char **right_tokens = NULL; // Commands to the right of the pipe
+  int pipe_fd[2];             // File descriptors for the pipe
 
-  // invalid flag check
-  for (int i = 1; tokens[i] != NULL; i++)
+  // Detect the pipe and split the tokens
+  for (int i = 0; tokens[i] != NULL; i++)
     {
-      if (strncmp (tokens[i], "-l", 5) == 0
-          || strncmp (tokens[i], "-c", 5) == 0)
+      if (strcmp (tokens[i], "|") == 0)
         {
-          return;
+          tokens[i] = NULL; // Null-terminate the left tokens
+          left_tokens = tokens;
+          right_tokens = &tokens[i + 1];
+          break;
         }
     }
 
-  if (strcmp (command, "/bin/ls") == 0)
+  // If a pipe is detected
+  if (left_tokens && right_tokens)
     {
-      execute_ls_command (tokens);
-      return;
-    }
-  else if (strcmp (command, "/bin/head") == 0)
-    {
-      execute_head_command (tokens);
-      return;
-    }
-  else if (strcmp (command, "/bin/cut") == 0)
-    {
-      execute_cut_command (tokens);
-      return;
-    }
-  else if (strcmp (command, "/bin/env") == 0)
-    {
-      execute_env_command (tokens);
-      return;
-    }
-
-  if (access (command, X_OK) == 0)
-    {
-      if (execvp (command, tokens) == -1)
+      if (pipe (pipe_fd) == -1)
         {
-          perror ("Error executing command");
+          perror ("Error creating pipe");
           exit (EXIT_FAILURE);
+        }
+
+      // Fork and execute the first command
+      pid_t pid1 = fork ();
+      if (pid1 == 0)
+        {
+          close (pipe_fd[0]); // Close read end in child
+          dup2 (pipe_fd[1], STDOUT_FILENO);
+          close (pipe_fd[1]);
+          // Recursively execute the left command
+          execute_command (tokens);
+          exit (EXIT_FAILURE);
+        }
+
+      // Fork and execute the second command
+      pid_t pid2 = fork ();
+      if (pid2 == 0)
+        {
+          close (pipe_fd[1]); // Close write end in child
+          dup2 (pipe_fd[0], STDIN_FILENO);
+          close (pipe_fd[0]);
+          // Recursively execute the right command
+          execute_command (right_tokens);
+          exit (EXIT_FAILURE);
+        }
+
+      // Close both ends of the pipe in the parent
+      close (pipe_fd[0]);
+      close (pipe_fd[1]);
+
+      // Wait for both child processes to complete
+      wait (NULL);
+      wait (NULL);
+    }
+  else
+    {
+      char *command = tokens[0];
+
+      if (strcmp (command, "ls") == 0 || strcmp (command, "head") == 0
+          || strcmp (command, "cut") == 0 || strcmp (command, "env") == 0)
+        {
+          char full_command[100];
+          snprintf (full_command, sizeof (full_command), "./bin/%s", command);
+          tokens[0] = full_command;
+          command = full_command;
+        }
+      if (command[0] == '.' && command[1] == '/')
+        {
+          command += 1; // Skip the '.'
+        }
+
+      // invalid flag check
+      for (int i = 1; tokens[i] != NULL; i++)
+        {
+          if (strncmp (tokens[i], "-l", 5) == 0
+              || strncmp (tokens[i], "-c", 5) == 0)
+            {
+              return;
+            }
+        }
+
+      if (strcmp (command, "/bin/ls") == 0)
+        {
+          execute_ls_command (tokens);
+          return;
+        }
+      else if (strcmp (command, "/bin/head") == 0)
+        {
+          execute_head_command (tokens);
+          return;
+        }
+      else if (strcmp (command, "/bin/cut") == 0)
+        {
+          execute_cut_command (tokens);
+          return;
+        }
+      else if (strcmp (command, "/bin/env") == 0)
+        {
+          execute_env_command (tokens);
+          return;
+        }
+
+      if (access (command, X_OK) == 0)
+        {
+          if (execvp (command, tokens) == -1)
+            {
+              perror ("Error executing command");
+              exit (EXIT_FAILURE);
+            }
         }
     }
 }

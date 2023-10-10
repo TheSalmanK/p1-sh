@@ -1,15 +1,15 @@
-$ ./bin/cut -f -1 cut_data/data.spaces
 cut, splits each line based on a delimiter
 usage: cut [FLAG] FILE
 FLAG can be:
   -d C     split each line based on the character C (default ' ')
   -f N     print the Nth field (1 is first, default 1)
 If no FILE specified, read from STDIN
-$ ./bin/cut -f 3 cut_data/data.spaces
 me
 
+
+
+$ ./bin/cut -f -1 cut_data/data.spaces
+$ ./bin/cut -f 3 cut_data/data.spaces
 $ ./bin/cut -d , -f 5 cut_data/data.csv
-
-
 $ quit
 

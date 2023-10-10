@@ -15,88 +15,6 @@
 int last_return_code = 0;
 
 void
-execute_command_with_pipe (char **tokens)
-{
-  int pipe_fd[2];
-  pid_t child1, child2;
-
-  // Find the position of the pipe in the tokens
-  int pipe_pos = -1;
-  for (int i = 0; tokens[i] != NULL; i++)
-    {
-      if (strcmp (tokens[i], "|") == 0)
-        {
-          pipe_pos = i;
-          break;
-        }
-    }
-
-  if (pipe_pos == -1)
-    {
-      // No pipe found, execute the command normally
-      execute_command (tokens);
-      return;
-    }
-
-  // Split the tokens into two commands: before and after the pipe
-  char *cmd1[pipe_pos + 1];
-  char *cmd2[100 - pipe_pos];
-  memcpy (cmd1, tokens, pipe_pos * sizeof (char *));
-  memcpy (cmd2, &tokens[pipe_pos + 1], (100 - pipe_pos - 1) * sizeof (char *));
-  cmd1[pipe_pos] = NULL;
-  cmd2[100 - pipe_pos - 1] = NULL;
-
-  // Create a pipe
-  if (pipe (pipe_fd) == -1)
-    {
-      perror ("Error creating pipe");
-      exit (EXIT_FAILURE);
-    }
-
-  // First child process
-  if ((child1 = fork ()) == 0)
-    {
-      close (pipe_fd[0]); // Close read end of the pipe
-      dup2 (pipe_fd[1],
-            STDOUT_FILENO); // Redirect STDOUT to write end of the pipe
-      close (pipe_fd[1]);
-      execvp (cmd1[0], cmd1);
-      perror ("Error executing first command");
-      exit (EXIT_FAILURE);
-    }
-
-  // Second child process
-  if ((child2 = fork ()) == 0)
-    {
-      close (pipe_fd[1]); // Close write end of the pipe
-      dup2 (pipe_fd[0],
-            STDIN_FILENO); // Redirect STDIN to read end of the pipe
-      close (pipe_fd[0]);
-      execvp (cmd2[0], cmd2);
-      perror ("Error executing second command");
-      exit (EXIT_FAILURE);
-    }
-
-  close (pipe_fd[0]);
-  close (pipe_fd[1]);
-  waitpid (child1, NULL, 0);
-  waitpid (child2, NULL, 0);
-}
-
-int
-contains_pipe (char **tokens)
-{
-  for (int i = 0; tokens[i] != NULL; i++)
-    {
-      if (strcmp (tokens[i], "|") == 0)
-        {
-          return 1;
-        }
-    }
-  return 0;
-}
-
-void
 shell (FILE *input)
 {
   hash_init (100);
@@ -157,16 +75,9 @@ shell (FILE *input)
 
           if ((pid = fork ()) == 0)
             { // Child process
-              // Check if the command contains a pipe
-              if (contains_pipe (tokens))
-                {
-                  execute_command_with_pipe (tokens);
-                }
-              else
-                {
-                  // Execute the command
-                  execute_command (tokens);
-                }
+              // Execute the command
+              dup2 (fileno (input), STDIN_FILENO);
+              execute_command (tokens);
               exit (EXIT_FAILURE); // This line will only be reached if
                                    // execute_command fails
             }

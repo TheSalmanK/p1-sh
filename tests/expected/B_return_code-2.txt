@@ -1,10 +1,10 @@
 empty.txt
 pwd.txt
-0
-1
 $ ./bin/ls data
 $ echo $?
+0
 $ ./bin/ls asldfkjasldfkj
 $ echo $?
+1
 $ quit
 
