@@ -17,6 +17,20 @@
 
 // Check if the command is in the ./bin/ directory
 
+void
+cut_usage ()
+{
+  printf ("cut, splits each line based on a delimiter\n");
+  printf ("usage: cut [FLAG] FILE\n");
+  printf ("FLAG can be:\n");
+  printf ("  -d C     split each line based on the character C "
+          "(default ' ')\n");
+  printf ("  -f N     print the Nth field (1 is first, default 1)\n");
+  printf ("If no FILE specified, read from STDIN\n");
+  fflush (stdout);
+  exit (EXIT_FAILURE);
+}
+
 int
 is_bin_command (const char *command)
 {
@@ -152,16 +166,7 @@ execute_cut_command (char **tokens)
             }
           else
             {
-              printf ("cut, splits each line based on a delimiter\n");
-              printf ("usage: cut [FLAG] FILE\n");
-              printf ("FLAG can be:\n");
-              printf ("  -d C     split each line based on the character C "
-                      "(default ' ')\n");
-              printf (
-                  "  -f N     print the Nth field (1 is first, default 1)\n");
-              printf ("If no FILE specified, read from STDIN\n");
-              fflush (stdout);
-              exit (EXIT_FAILURE);
+              cut_usage ();
             }
         }
       else if (strcmp (tokens[j], "-f") == 0)
@@ -174,15 +179,7 @@ execute_cut_command (char **tokens)
               int field_num = atoi (tokens[j + 1]);
               if (field_num <= 0)
                 {
-                  printf ("cut, splits each line based on a delimiter\n");
-                  printf ("usage: cut [FLAG] FILE\n");
-                  printf ("FLAG can be:\n");
-                  printf (
-                      "  -d C     split each line based on the character C "
-                      "(default ' ')\n");
-                  printf ("  -f N     print the Nth field (1 is first, "
-                          "default 1)\n");
-                  printf ("If no FILE specified, read from STDIN\n");
+                  cut_usage ();
                   fflush (stdout);
                   exit (EXIT_FAILURE);
                 }
@@ -190,16 +187,7 @@ execute_cut_command (char **tokens)
             }
           else
             {
-              printf ("cut, splits each line based on a delimiter\n");
-              printf ("usage: cut [FLAG] FILE\n");
-              printf ("FLAG can be:\n");
-              printf ("  -d C     split each line based on the character C "
-                      "(default ' ')\n");
-              printf (
-                  "  -f N     print the Nth field (1 is first, default 1)\n");
-              printf ("If no FILE specified, read from STDIN\n");
-              fflush (stdout);
-              exit (EXIT_FAILURE);
+              cut_usage ();
             }
         }
       else
@@ -232,7 +220,7 @@ execute_cut_command (char **tokens)
   args[k] = NULL; // Ensure args array is null-terminated
 
   // Execute the cut command with the arguments
-  if (execvp ("/bin/cut", args) == -1)
+  if (execvp ("./bin/cut", args) == -1)
     {
       perror ("Error executing cut command");
       exit (EXIT_FAILURE);
