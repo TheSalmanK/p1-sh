@@ -58,7 +58,8 @@ execute_cat_command (char **tokens)
       args[k++] = tokens[j];
     }
 
-  args[k] = NULL; // Ensure args array is null-terminated
+  // Ensure args array is null-terminated
+  args[k] = NULL;
 
   // Execute the cat command with the arguments
   if (execvp ("/bin/cat", args) == -1)
@@ -67,6 +68,8 @@ execute_cat_command (char **tokens)
       exit (EXIT_FAILURE);
     }
 }
+
+// functionality for the env command
 
 void
 execute_env_command (char **tokens)
@@ -283,7 +286,7 @@ execute_head_command (char **tokens)
   args[k] = NULL; // Ensure args array is null-terminated
 
   // Execute the head command with the arguments
-  execvp ("/bin/head", args);
+  execvp ("./bin/head", args);
 }
 
 // functionality for ls command
@@ -335,7 +338,7 @@ execute_ls_command (char **tokens)
     }
 
   // Execute the ls command with the arguments
-  execvp ("/bin/ls", args);
+  execvp ("./bin/ls", args);
 }
 
 // default call to run a utility
@@ -410,10 +413,6 @@ execute_command (char **tokens)
           snprintf (full_command, sizeof (full_command), "./bin/%s", command);
           tokens[0] = full_command;
           command = full_command;
-        }
-      if (command[0] == '.' && command[1] == '/')
-        {
-          command += 1; // Skip the '.'
         }
 
       // invalid flag check
